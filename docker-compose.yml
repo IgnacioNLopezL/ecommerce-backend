@@ -1,0 +1,56 @@
+version: "3"
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    env_file:
+      - .env.docker
+    environment:
+      - SERVER_PORT=${SERVER_PORT}
+      - DB_HOST=db
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+    ports:
+      - ${SERVER_PORT}:${SERVER_PORT}
+    depends_on:
+      - db
+    links:
+      - db:db
+    volumes:
+      - .:/usr/src/app
+    command: npm run start:dev
+    networks:
+      - api
+  db:
+    image: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+    restart: always
+    cap_add:
+      - SYS_NICE
+    ports:
+      - ${DB_PORT}:${DB_PORT}
+    networks:
+      - api
+    volumes:
+      - db_data:/var/lib/mysql
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+    networks:
+      - api
+networks:
+  api:
+volumes:
+  db_data:
